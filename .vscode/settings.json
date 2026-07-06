@@ -1,0 +1,13 @@
+{
+  "python.defaultInterpreterPath": "c:\\Work\\MLOps\\telco-churn-pipeline\\.venv\\Scripts\\python.exe",
+  "python.pythonPath": "c:\\Work\\MLOps\\telco-churn-pipeline\\.venv\\Scripts\\python.exe",
+  "python.terminal.activateEnvironment": true,
+  "python.terminal.activateEnvInCurrentTerminal": true,
+  "python.useEnvironmentsExtension": true,
+  "python.analysis.extraPaths": [
+    "c:\\Work\\MLOps\\telco-churn-pipeline\\.venv\\Lib\\site-packages"
+  ],
+  "python.autoComplete.extraPaths": [
+    "c:\\Work\\MLOps\\telco-churn-pipeline\\.venv\\Lib\\site-packages"
+  ]
+}

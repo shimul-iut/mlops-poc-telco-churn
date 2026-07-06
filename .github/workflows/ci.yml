@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-and-validate:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Lint with Ruff
+        run: |
+          ruff check src/ tests/
+        continue-on-error: true
+
+      - name: Generate Data and Model for validation
+        run: |
+          python src/prepare_data.py
+          python src/train.py
+
+      - name: Run Data & Model Validation
+        run: |
+          python src/validate.py
+
+      - name: Run Unit Tests
+        run: |
+          pytest tests/ -v

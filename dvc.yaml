@@ -1,0 +1,17 @@
+stages:
+  prepare:
+    cmd: python src/prepare_data.py
+    deps:
+      - src/prepare_data.py
+    outs:
+      - data/telco_churn.csv
+  train:
+    cmd: python src/train.py
+    deps:
+      - src/train.py
+      - data/telco_churn.csv
+    outs:
+      - models/model.joblib
+    metrics:
+      - metrics.json:
+          cache: false

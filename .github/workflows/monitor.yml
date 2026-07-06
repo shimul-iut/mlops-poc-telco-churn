@@ -1,0 +1,40 @@
+name: Continuous Monitoring
+
+on:
+  schedule:
+    # Run daily at 06:00 UTC
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  monitor-drift:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Drift Monitoring
+        # Exit code 2 indicates drift was detected, which is a warning but not a workflow compile failure.
+        # We can handle exit code 2 and upload the report.
+        run: |
+          python src/monitor.py
+        continue-on-error: true
+
+      - name: Upload Drift Report Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: drift-report
+          path: reports/drift_report.html
+          retention-days: 14
