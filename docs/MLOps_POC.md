@@ -12,13 +12,13 @@ A 2–3 day, sub-$10 proof of concept to onboard DevOps engineers to MLOps.
 
 DevOps already owns CI/CD, IaC, containers, and monitoring. MLOps is the same discipline applied to a moving target: **data and models change, not just code**. The POC is built so every new MLOps concept is introduced as "the thing you already do, plus one twist":
 
-| DevOps concept | MLOps twist | POC tool |
-| :--- | :--- | :--- |
-| **Code versioning (Git)** | Data & model versioning | Git + **DVC** |
-| **CI (lint/test/build)** | + data & model validation tests | **GitHub Actions** |
-| **CD (deploy artifact)** | Deploy a model artifact/container | **GitHub Actions → AWS Lambda** |
-| — *(new concept)* | **CT:** retraining is itself a pipeline step | GitHub Actions scheduled/triggered job |
-| **Monitoring (uptime, latency)** | + data drift / prediction quality | **CloudWatch + Evidently AI** |
+| DevOps concept                   | MLOps twist                                  | POC tool                               |
+| :------------------------------- | :------------------------------------------- | :------------------------------------- |
+| **Code versioning (Git)**        | Data & model versioning                      | Git + **DVC**                          |
+| **CI (lint/test/build)**         | + data & model validation tests              | **GitHub Actions**                     |
+| **CD (deploy artifact)**         | Deploy a model artifact/container            | **GitHub Actions → AWS Lambda**        |
+| — _(new concept)_                | **CT:** retraining is itself a pipeline step | GitHub Actions scheduled/triggered job |
+| **Monitoring (uptime, latency)** | + data drift / prediction quality            | **CloudWatch + Evidently AI**          |
 
 This keeps the learning curve to one new idea at a time rather than a full ML platform.
 
@@ -31,6 +31,7 @@ Since the goal is teaching **pipeline discipline**, not ML skill, the model itse
 **Recommended POC use case:** A binary classifier on the **Telco Customer Churn dataset** (IBM, 7,043 rows × 21 columns) using **scikit-learn**. It's a mix of categorical (contract type, payment method, internet service) and numeric (tenure, monthly charges) features — while still training in seconds on a laptop.
 
 **Recommended open-source model:** scikit-learn `RandomForestClassifier` or `LogisticRegression`.
+
 - 100% open source, no license concerns
 - Trains in <5 seconds on any laptop or CI runner — no GPU, no special compute
 - Small enough (KBs) to package in a container and deploy on Lambda for pennies
@@ -41,19 +42,17 @@ Since the goal is teaching **pipeline discipline**, not ML skill, the model itse
 
 ## 3. Tool stack (mapped to your budget & CI tool)
 
-| Pillar | Tool | Cost |
-| :--- | :--- | :--- |
-| **Source & data versioning** | Git (GitHub) + **DVC** | Free |
-| **Artifact/data storage** | **Amazon S3** | Free tier (5GB) — fractions of a cent |
-| **Experiment tracking** | **MLflow** (local file-based, no server) | Free |
-| **CI (test, lint, validate)** | **GitHub Actions** (existing tool) | Free (2,000 min/mo on free plan) |
-| **Containerization** | **Docker + Amazon ECR** | Free tier: 500MB storage/mo, ~$0.10/GB after |
-| **CD (deploy)** | **AWS Lambda** (container image support) + Function URL | Free tier: 1M requests/mo |
-| **CT (retrain trigger)** | GitHub Actions scheduled workflow / manual dispatch | Free |
-| **CM (monitoring)** | **Amazon CloudWatch Logs + Evidently AI** (open source drift reports) | Free tier: 5GB logs/mo |
-| **IaC (optional, if time permits)** | **Terraform** (open source) for the Lambda + IAM role | Free |
-
-**Expected total AWS spend for the POC: $0–2**, comfortably inside your $10 ceiling. Lambda, S3, and CloudWatch free tiers cover this workload many times over; ECR free tier (500MB) is more than enough for one small image, so storage cost stays near $0. The only realistic cost driver is if old image versions pile up in ECR or S3 storage isn't cleaned up afterward — flag this for teardown at the end.
+| Pillar                              | Tool                                                                  | Cost                                         |
+| :---------------------------------- | :-------------------------------------------------------------------- | :------------------------------------------- |
+| **Source & data versioning**        | Git (GitHub) + **DVC**                                                | Free                                         |
+| **Artifact/data storage**           | **Amazon S3**                                                         | Free tier (5GB) — fractions of a cent        |
+| **Experiment tracking**             | **MLflow** (local file-based, no server)                              | Free                                         |
+| **CI (test, lint, validate)**       | **GitHub Actions** (existing tool)                                    | Free (2,000 min/mo on free plan)             |
+| **Containerization**                | **Docker + Amazon ECR**                                               | Free tier: 500MB storage/mo, ~$0.10/GB after |
+| **CD (deploy)**                     | **AWS Lambda** (container image support) + Function URL               | Free tier: 1M requests/mo                    |
+| **CT (retrain trigger)**            | GitHub Actions scheduled workflow / manual dispatch                   | Free                                         |
+| **CM (monitoring)**                 | **Amazon CloudWatch Logs + Evidently AI** (open source drift reports) | Free tier: 5GB logs/mo                       |
+| **IaC (optional, if time permits)** | **Terraform** (open source) for the Lambda + IAM role                 | Free                                         |
 
 ---
 
@@ -114,16 +113,16 @@ def prepare():
     df["TotalCharges"] = pd.to_numeric(df["TotalCharges"], errors="coerce")
     df["TotalCharges"] = df["TotalCharges"].fillna(df["TotalCharges"].median())
     df["Churn"] = df["Churn"].map({"Yes": 1, "No": 0})
-    
+
     # Simple label-encode the categoricals so scikit-learn can consume them directly
     for col in CATEGORICAL_COLS:
         df[col] = df[col].astype("category").cat.codes
-        
+
     keep_cols = CATEGORICAL_COLS + [
         "SeniorCitizen", "tenure", "MonthlyCharges", "TotalCharges", "Churn",
     ]
     df = df[keep_cols]
-    
+
     df.to_csv(OUTPUT_PATH, index=False)
     print(f"Wrote {len(df)} rows to {OUTPUT_PATH}")
 
@@ -132,9 +131,6 @@ if __name__ == "__main__":
 ```
 
 Run it once with `python src/prepare_data.py`, then `dvc add data/telco_churn.csv` (or let the dvc stage definition handle tracking automatically on `dvc repro`) and push to the S3 remote with `dvc push`.
-
-> [!NOTE]
-> Note the extra richness vs. a Titanic-style dataset: 15 categorical columns instead of one, giving `prepare_data.py` a non-trivial encoding step and giving the later drift-detection work (Section 10.2) more feature distributions worth watching.
 
 ---
 
@@ -236,23 +232,23 @@ The Day 3 loop in the POC (drift report → manual retrain trigger) is a simplif
 
 ### 10.1 Retraining (CT) — from manual to automatic
 
-| Step | What to try | Why it matters |
-| :--- | :--- | :--- |
-| **1. Scheduled retraining** | Change `train-deploy.yml`'s trigger from "on merge" to also run on a cron schedule (e.g. weekly), retraining on whatever data is currently in `data/`. | Mirrors the most common real-world CT trigger: time-based, not event-based. |
-| **2. Data-volume trigger** | Add a step that checks how many new rows have landed in S3 since the last training run; only kick off retraining once a threshold is crossed (e.g. 500 new rows). | Avoids retraining on trivial amounts of new data — a real cost/value tradeoff teams have to make. |
-| **3. Performance-based trigger** | Have `monitor.py` compare live prediction accuracy (once ground truth is available) against the last recorded training accuracy; if it drops below a threshold, trigger `train-deploy.yml` via the GitHub API (`workflow_dispatch`) instead of a person doing it manually. | This is the real "closing the loop" moment — monitoring output directly causes a new training run, no human in the middle. |
-| **4. Champion/challenger evaluation** | Before promoting a newly retrained model, run it against a held-out validation set alongside the currently deployed ("champion") model. Only promote the new ("challenger") model if it beats the champion on the agreed metric. | Prevents a retrain from silently deploying a worse model — the ML equivalent of a canary/rollback gate. |
-| **5. Model registry** | Introduce **MLflow Model Registry** (still free, can run alongside the local MLflow tracking already in place) to formally track model versions and their stage: Staging → Production → Archived. | Gives the team a single source of truth for "what's live right now," instead of inferring it from the latest ECR image tag. |
+| Step                                  | What to try                                                                                                                                                                                                                                                                | Why it matters                                                                                                              |
+| :------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------- |
+| **1. Scheduled retraining**           | Change `train-deploy.yml`'s trigger from "on merge" to also run on a cron schedule (e.g. weekly), retraining on whatever data is currently in `data/`.                                                                                                                     | Mirrors the most common real-world CT trigger: time-based, not event-based.                                                 |
+| **2. Data-volume trigger**            | Add a step that checks how many new rows have landed in S3 since the last training run; only kick off retraining once a threshold is crossed (e.g. 500 new rows).                                                                                                          | Avoids retraining on trivial amounts of new data — a real cost/value tradeoff teams have to make.                           |
+| **3. Performance-based trigger**      | Have `monitor.py` compare live prediction accuracy (once ground truth is available) against the last recorded training accuracy; if it drops below a threshold, trigger `train-deploy.yml` via the GitHub API (`workflow_dispatch`) instead of a person doing it manually. | This is the real "closing the loop" moment — monitoring output directly causes a new training run, no human in the middle.  |
+| **4. Champion/challenger evaluation** | Before promoting a newly retrained model, run it against a held-out validation set alongside the currently deployed ("champion") model. Only promote the new ("challenger") model if it beats the champion on the agreed metric.                                           | Prevents a retrain from silently deploying a worse model — the ML equivalent of a canary/rollback gate.                     |
+| **5. Model registry**                 | Introduce **MLflow Model Registry** (still free, can run alongside the local MLflow tracking already in place) to formally track model versions and their stage: Staging → Production → Archived.                                                                          | Gives the team a single source of truth for "what's live right now," instead of inferring it from the latest ECR image tag. |
 
 ### 10.2 Drift & monitoring (CM) — from a static report to a real signal
 
-| Step | What to try | Why it matters |
-| :--- | :--- | :--- |
-| **1. Distinguish drift types** | Extend `monitor.py`'s Evidently AI report to explicitly separate **data drift** (input feature distributions shifting, e.g. a growing share of customers on Month-to-month contracts vs. what the model was trained on) from **prediction drift** (the model's output distribution shifting) and — once ground truth is available — **concept drift** (the relationship between inputs and the true outcome changing). | These require different responses: data drift may just need monitoring, concept drift usually forces a retrain. |
-| **2. Ground-truth feedback loop** | Simulate a downstream process that eventually reports the real outcome for each prediction (e.g. a delayed CSV of "actually churned" values, since real churn outcomes only become known weeks later). Join this against the logged predictions to compute *live* accuracy, not just data drift. | Data drift alone doesn't prove the model got worse — this is what actually confirms it. |
-| **3. Alerting, not just reporting** | Wire the drift report's pass/fail result into a Slack/email notification (SNS + a Lambda, or just a GitHub Actions step that fails the workflow and notifies via a webhook) instead of only producing a report artifact. | Turns monitoring from something someone has to remember to check into something that pages the team. |
-| **4. Canary / shadow deployment** | Once a challenger model passes champion/challenger evaluation, route a small percentage of live traffic to it (e.g. via a second Lambda alias + weighted routing) before fully promoting it. | Introduces the DevOps-familiar canary release pattern to model deployments specifically. |
-| **5. Dashboarding** | Push CloudWatch metrics + Evidently AI drift scores into a simple **Grafana** dashboard (free, can run in a small Docker container) so drift and prediction volume are visible over time, not just per-run. | Gives the team an at-a-glance operational view, same as they'd build for any other service. |
+| Step                                | What to try                                                                                                                                                                                                                                                                                                                                                                                                            | Why it matters                                                                                                  |
+| :---------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------- |
+| **1. Distinguish drift types**      | Extend `monitor.py`'s Evidently AI report to explicitly separate **data drift** (input feature distributions shifting, e.g. a growing share of customers on Month-to-month contracts vs. what the model was trained on) from **prediction drift** (the model's output distribution shifting) and — once ground truth is available — **concept drift** (the relationship between inputs and the true outcome changing). | These require different responses: data drift may just need monitoring, concept drift usually forces a retrain. |
+| **2. Ground-truth feedback loop**   | Simulate a downstream process that eventually reports the real outcome for each prediction (e.g. a delayed CSV of "actually churned" values, since real churn outcomes only become known weeks later). Join this against the logged predictions to compute _live_ accuracy, not just data drift.                                                                                                                       | Data drift alone doesn't prove the model got worse — this is what actually confirms it.                         |
+| **3. Alerting, not just reporting** | Wire the drift report's pass/fail result into a Slack/email notification (SNS + a Lambda, or just a GitHub Actions step that fails the workflow and notifies via a webhook) instead of only producing a report artifact.                                                                                                                                                                                               | Turns monitoring from something someone has to remember to check into something that pages the team.            |
+| **4. Canary / shadow deployment**   | Once a challenger model passes champion/challenger evaluation, route a small percentage of live traffic to it (e.g. via a second Lambda alias + weighted routing) before fully promoting it.                                                                                                                                                                                                                           | Introduces the DevOps-familiar canary release pattern to model deployments specifically.                        |
+| **5. Dashboarding**                 | Push CloudWatch metrics + Evidently AI drift scores into a simple **Grafana** dashboard (free, can run in a small Docker container) so drift and prediction volume are visible over time, not just per-run.                                                                                                                                                                                                            | Gives the team an at-a-glance operational view, same as they'd build for any other service.                     |
 
 ### 10.3 Suggested hands-on exercises (pick 2–3 to start)
 

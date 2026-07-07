@@ -17,10 +17,10 @@ Reference: [MLOps_POC.md](file:///c:/Work/MLOps/telco-churn-pipeline/docs/MLOps_
 - [x] Create `requirements.txt` with pinned dependencies
 - [x] Create `.gitignore` (data/, mlruns/, models/, __pycache__, .dvc/cache/)
 - [x] Create `dvc.yaml` with `prepare` and `train` stages
-- [ ] Initialize DVC (`dvc init`)
-- [ ] Configure DVC S3 remote (`dvc remote add -d s3remote s3://mlops-poc-dvc-telco-churn/dvc-store`)
+- [x] Initialize DVC (`dvc init`)
+- [x] Configure DVC S3 remote (`dvc remote add -d s3remote s3://mlops-poc-dvc-telco-churn/dvc-store`)
 - [x] Set up Python virtual environment and install dependencies
-- [ ] Connect Git remote (`git remote add origin https://github.com/shimul-iut/mlops-poc-telco-churn.git`)
+- [x] Connect Git remote (`git remote add origin https://github.com/shimul-iut/mlops-poc-telco-churn.git`)
 
 ### 1.2 Data Pipeline
 - [x] Create `data/.gitkeep`
@@ -57,10 +57,10 @@ Reference: [MLOps_POC.md](file:///c:/Work/MLOps/telco-churn-pipeline/docs/MLOps_
 - [x] Run `pytest tests/ -v` — all green
 
 ### 1.5 Version & Push
-- [ ] `dvc add data/telco_churn.csv models/model.joblib`
-- [ ] Create S3 bucket (`aws s3 mb s3://mlops-poc-dvc-telco-churn`)
-- [ ] `dvc push` — data + model to S3
-- [ ] Initial Git commit + push to `origin/main`
+- [x] `dvc add data/telco_churn.csv models/model.joblib` (Note: tracked via dvc.yaml stages)
+- [x] Create S3 bucket (`aws s3 mb s3://mlops-poc-dvc-telco-churn`)
+- [x] `dvc push` — data + model to S3
+- [x] Initial Git commit + push to `origin/main`
 
 ---
 
@@ -75,17 +75,17 @@ Reference: [MLOps_POC.md](file:///c:/Work/MLOps/telco-churn-pipeline/docs/MLOps_
 
 ### 2.2 Docker Image
 - [x] Create `Dockerfile` (base: `public.ecr.aws/lambda/python:3.11`)
-- [ ] Build locally: `docker build -t telco-churn-predictor .`
-- [ ] Test locally: `docker run -p 9000:8080 telco-churn-predictor` + curl invocation
+- [x] Build locally: `docker build -t telco-churn-predictor .`
+- [x] Test locally: `docker run -p 9000:8080 telco-churn-predictor` + curl invocation
 
 ### 2.3 AWS Infrastructure (One-time Setup)
-- [ ] Create ECR repository (`aws ecr create-repository --repository-name telco-churn-predictor`)
-- [ ] Set ECR lifecycle policy (expire untagged images after 7 days)
-- [ ] Create IAM role `telco-churn-lambda-role` with `AWSLambdaBasicExecutionRole`
-- [ ] Push initial Docker image to ECR
-- [ ] Create Lambda function (container image, 512MB memory, 30s timeout)
-- [ ] Create Function URL (`--auth-type AWS_IAM`)
-- [ ] Test with a signed request (`awscurl` or Python SigV4)
+- [x] Create ECR repository (`aws ecr create-repository --repository-name telco-churn-predictor`)
+- [x] Set ECR lifecycle policy (expire untagged images after 7 days)
+- [x] Create IAM role `telco-churn-lambda-role` with `AWSLambdaBasicExecutionRole`
+- [x] Push initial Docker image to ECR
+- [x] Create Lambda function (container image, 512MB memory, 30s timeout)
+- [x] Create Function URL (`--auth-type AWS_IAM`)
+- [x] Test with a signed request (`awscurl` or Python SigV4)
 
 ### 2.4 CI Workflow
 - [x] Create `.github/workflows/ci.yml`

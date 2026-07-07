@@ -30,5 +30,5 @@ stages:
       size: 187
     - path: models/model.joblib
       hash: md5
-      md5: 7fd6d7242470afbcdec3ec2ceebcdd33
-      size: 17627417
+      md5: fab3e6e90f10eb3ee6d4940169b93807
+      size: 17627513

@@ -6,17 +6,8 @@ import pandas as pd
 
 MODEL_PATH = "models/model.joblib"
 
-# Load model on cold start
-if os.path.exists(MODEL_PATH):
-    try:
-        model = joblib.load(MODEL_PATH)
-        print("Model loaded successfully on cold start.")
-    except Exception as e:
-        print(f"Error loading model: {e}")
-        model = None
-else:
-    print(f"Warning: Model not found at {MODEL_PATH}")
-    model = None
+# Model will be lazy-loaded inside the handler function
+model = None
 
 FEATURE_COLS = [
     "gender", "Partner", "Dependents", "PhoneService", "MultipleLines",
