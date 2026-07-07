@@ -27,3 +27,6 @@ __pycache__/
 # Generated reports/outputs
 /reports/drift_report.html
 metrics.json
+
+# Local MLflow DB
+mlflow.db
