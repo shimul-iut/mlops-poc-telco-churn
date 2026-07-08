@@ -59,6 +59,25 @@ mlflow ui --backend-store-uri sqlite:///mlflow.db
 3. Every retraining iteration generates a new run (e.g., `dashing-llama-412`).
 4. Select multiple runs and click **Compare** to observe how metric scores (such as `accuracy` and `f1_score`) shift as you retrain on drifted data.
 
+### Step 4.3: Understanding Model Performance Metrics
+During training, the pipeline outputs a `metrics.json` file. Here is what each performance metric means in the context of our Telco Churn model:
+
+* **Accuracy (77.30%)**: 
+  * *What it means*: The percentage of correct classifications (both churners and loyal customers) out of all tested customers.
+  * *Context*: While 77.3% seems good, churn datasets are heavily imbalanced (most customers don't churn). High accuracy can be misleading if the model is simply predicting "No Churn" for everyone.
+* **Precision (60.64%)**: 
+  * *What it means*: Out of all customers the model *predicted* would churn, what percentage actually did?
+  * *Context*: If the model flags 100 customers as "high-risk", 60.6% of them will actually churn, while 39.4% are "false alarms" (healthy customers targeted by retention campaigns unnecessarily).
+* **Recall / Sensitivity (38.26%)**: 
+  * *What it means*: Out of all customers who *actually* churned, what percentage did the model successfully identify?
+  * *Context*: The model successfully caught 38.3% of the real churners but missed 61.7% of them (False Negatives). This indicates the model is conservative and needs tuning to catch more churners.
+* **F1-Score (46.91%)**: 
+  * *What it means*: The harmonic mean of Precision and Recall. It balances both metrics.
+  * *Context*: Since our recall is quite low (38.3%) compared to precision (60.6%), our F1-score sits at 46.9%, showing that the model's overall prediction balance has room for improvement.
+* **ROC AUC (79.48%)**: 
+  * *What it means*: Area Under the Receiver Operating Characteristic curve. Measures the model's ability to separate churners from non-churners across all possible probability thresholds.
+  * *Context*: A score of 79.5% is considered good (50% is random guessing, 100% is perfect). It means if you randomly select one customer who churned and one who stayed, there is a 79.5% chance the model will rank the churner as higher risk.
+
 ---
 
 ## 5. Local Container Redeployment & Testing (CD)
