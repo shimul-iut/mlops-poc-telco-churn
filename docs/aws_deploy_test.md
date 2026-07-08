@@ -125,3 +125,71 @@ docker push 520687296884.dkr.ecr.us-east-1.amazonaws.com/telco-churn-predictor:l
 # Trigger Lambda update
 aws lambda update-function-code --function-name telco-churn-predictor --image-uri 520687296884.dkr.ecr.us-east-1.amazonaws.com/telco-churn-predictor:latest --profile mlops-poc
 ```
+
+### Step 5.3: Querying Endpoint with Pre-configured Payloads
+You can use the helper script `src/test_endpoint.py` to send signed SigV4 requests. The script contains 10 distinct, pre-configured customer profiles (index 0 to 9) that can be selected using a command-line argument:
+
+```powershell
+python src/test_endpoint.py <payload_id>
+```
+
+#### Key Payload Profiles to Test:
+* **Payload 0 (High Risk)**: Month-to-month contract, short tenure (1 month), high charges.
+  ```powershell
+  python src/test_endpoint.py 0
+  ```
+* **Payload 1 (Low Risk)**: Two-year contract, long tenure (72 months), low charges.
+  ```powershell
+  python src/test_endpoint.py 1
+  ```
+* **Payload 7 (Brand New Customer)**: Month-to-month contract, zero tenure.
+  ```powershell
+  python src/test_endpoint.py 7
+  ```
+
+The script will output the full request body sent to AWS, the response status code, and the returned prediction and probability output.
+
+
+---
+
+## 6. CloudWatch Alerting & Monitoring Setup (One-time)
+
+To actively monitor the deployed serving endpoint, we configure metric filters and real-time email alerts when the system experiences failures.
+
+### Step 6.1: Create Log Metric Filter
+Create a CloudWatch Metric Filter to scan the Lambda function's log group (`/aws/lambda/telco-churn-predictor`) for the keyword `ERROR` (representing unhandled exceptions or severe runtime failures) and increment a metric:
+```powershell
+aws logs put-metric-filter --log-group-name /aws/lambda/telco-churn-predictor --filter-name ErrorCountFilter --filter-pattern "ERROR" --metric-transformations metricName=ErrorCount,metricNamespace=churn-predictor,metricValue=1 --profile mlops-poc
+```
+
+### Step 6.2: Create SNS Alert Topic
+Create an Amazon Simple Notification Service (SNS) topic to process alert distributions:
+```powershell
+aws sns create-topic --name telco-churn-alerts --profile mlops-poc
+```
+*Note the returned topic ARN (e.g. `arn:aws:sns:us-east-1:520687296884:telco-churn-alerts`).*
+
+### Step 6.3: Subscribe Email Address
+Subscribe your email address to the SNS topic (replace `YOUR_EMAIL@example.com` with your target email address):
+```powershell
+aws sns subscribe --topic-arn arn:aws:sns:us-east-1:520687296884:telco-churn-alerts --protocol email --notification-endpoint YOUR_EMAIL@example.com --profile mlops-poc
+```
+*Note: AWS will send a confirmation email. Click the **Confirm Subscription** link in the message to activate the notification channel.*
+
+### Step 6.4: Create Metric Alarm
+Create a CloudWatch Alarm that triggers when `ErrorCount` is greater than or equal to `1` in any 5-minute evaluation period, routing the notification to the SNS topic:
+```powershell
+aws cloudwatch put-metric-alarm --alarm-name ChurnPredictorErrorAlarm --alarm-description "Alarm when Lambda predictor logs errors" --metric-name ErrorCount --namespace churn-predictor --statistic Sum --period 300 --evaluation-periods 1 --threshold 1 --comparison-operator GreaterThanOrEqualToThreshold --alarm-actions arn:aws:sns:us-east-1:520687296884:telco-churn-alerts --profile mlops-poc
+```
+
+### Step 6.5: Verify Alarm Execution
+To test the alerting infrastructure, trigger a real unhandled exception inside the Lambda runtime by sending a malformed payload (e.g. a JSON object with `"body": "null"` which evaluates body to Python `None` and throws an unhandled `AttributeError` when accessed):
+```powershell
+aws lambda invoke --function-name telco-churn-predictor --payload '{\"body\": \"null\"}' --cli-binary-format raw-in-base64-out response.json --profile mlops-poc
+```
+Check the output to verify the failure:
+```powershell
+Get-Content response.json
+```
+*Expected CLI output includes `"FunctionError": "Unhandled"`. Within 1–3 minutes, the alarm will transition to the **ALARM** state in the AWS console and send an alert notification email.*
+

@@ -1,1 +1,1 @@
-{"statusCode": 200, "headers": {"Content-Type": "application/json"}, "body": "{\"prediction\": 0, \"probability\": 0.46}"}
+{"errorMessage": "'NoneType' object has no attribute 'get'", "errorType": "AttributeError", "requestId": "e6ab6a58-cc73-4979-a860-3d07ae4c0438", "stackTrace": ["  File \"/var/task/predict.py\", line 92, in handler\n    val = body.get(col, DEFAULT_INPUTS[col])\n"]}

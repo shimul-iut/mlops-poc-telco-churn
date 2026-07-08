@@ -91,7 +91,7 @@ Reference: [MLOps_POC.md](file:///c:/Work/MLOps/telco-churn-pipeline/docs/MLOps_
 - [x] Create `.github/workflows/ci.yml`
   - [x] Trigger: `pull_request` to `main`
   - [x] Steps: checkout → setup Python 3.11 → install deps → lint (`ruff`) → pytest → validate
-- [ ] Configure GitHub secrets: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `AWS_ACCOUNT_ID`, `ECR_REPOSITORY`
+- [x] Configure GitHub secrets: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `AWS_ACCOUNT_ID`, `ECR_REPOSITORY`
 
 ### 2.5 CT + CD Workflow
 - [x] Create `.github/workflows/train-deploy.yml`
@@ -119,24 +119,24 @@ Reference: [MLOps_POC.md](file:///c:/Work/MLOps/telco-churn-pipeline/docs/MLOps_
 - [ ] Manually trigger and verify report artifact is downloadable
 
 ### 3.3 CloudWatch Setup (One-time)
-- [ ] Create metric filter on Lambda log group for `ERROR` → `churn-predictor/ErrorCount`
-- [ ] Create CloudWatch alarm: `ErrorCount > 5` in 5 min → SNS notification
-- [ ] Verify alarm fires with a test error
+- [x] Create metric filter on Lambda log group for `ERROR` → `churn-predictor/ErrorCount`
+- [x] Create CloudWatch alarm: `ErrorCount > 5` in 5 min → SNS notification
+- [x] Verify alarm fires with a test error
 
 ### 3.4 End-to-End Loop Simulation
-- [ ] Inject drifted data → run `monitor.py` → drift flagged
-- [ ] Manually trigger `train-deploy.yml` → new model deployed
-- [ ] Verify new model is live via Function URL smoke test
+- [x] Inject drifted data → run `monitor.py` → drift flagged
+- [x] Manually trigger `train-deploy.yml` → new model deployed
+- [x] Verify new model is live via Function URL smoke test
 
 ---
 
 ## Final
 
 - [x] Create `README.md` (quick-start, architecture, usage)
-- [ ] Review all success criteria from Section 8:
-  - [ ] Model is trained, versioned, and tracked (Git + DVC + MLflow)
-  - [ ] CI blocks a bad model/data change automatically
-  - [ ] Merge to `main` deploys a new model to Lambda with no manual steps
-  - [ ] Scheduled job detects data drift and produces a report
-  - [ ] Total AWS spend stays under $10
-- [ ] Clean up: verify no unexpected AWS costs in billing dashboard
+- [x] Review all success criteria from Section 8:
+  - [x] Model is trained, versioned, and tracked (Git + DVC + MLflow)
+  - [x] CI blocks a bad model/data change automatically
+  - [x] Merge to `main` deploys a new model to Lambda with no manual steps
+  - [x] Scheduled job detects data drift and produces a report
+  - [x] Total AWS spend stays under $10
+- [x] Clean up: verify no unexpected AWS costs in billing dashboard
